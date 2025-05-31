@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Translation Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* --- Polished, Professional, Aesthetic Header (copied from index.html) --- */
+        .header {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            background: linear-gradient(90deg, #1976d2 0%, #43a047 100%);
+            color: #fff;
+            padding: 2.5rem 0 1.5rem 0;
+            text-align: center;
+            z-index: 100;
+            border-radius: 0 0 32px 32px;
+            box-shadow: 0 8px 32px 0 rgba(25, 118, 210, 0.10), 0 2px 8px 0 rgba(67, 160, 71, 0.08);
+            overflow: visible;
+        }
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .header-logo-row {
+            display: flex;
+            align-items: center;
+            gap: 1.1em;
+            margin-bottom: 0.3em;
+        }
+        .header-logo-icon {
+            font-size: 2.2em;
+            filter: drop-shadow(0 2px 8px rgba(67,160,71,0.13));
+            animation: headerIconFloat 2.5s ease-in-out infinite;
+        }
+        @keyframes headerIconFloat {
+            0%,100% { transform: translateY(0);}
+            50% { transform: translateY(-8px);}
+        }
+        .header-title {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            font-size: 2.7em;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            background: linear-gradient(90deg, #fff 10%, #ffeb3b 90%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            padding: 0 0.25em;
+            text-shadow: 0 2px 8px rgba(25,118,210,0.07);
+        }
+        .header-tagline {
+            font-size: 1.25em;
+            font-weight: 500;
+            color: #e3f2fd;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.2em;
+        }
+        .header-highlight {
+            color: #ffeb3b;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ff9800 0%, #ffd600 100%);
+            padding: 0 0.25em;
+            border-radius: 0.4em;
+            box-shadow: 0 2px 8px #ffeb3b22;
+        }
+        .header-curve {
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            width: 100%;
+            height: 36px;
+            background: url('data:image/svg+xml;utf8,<svg width="100%" height="36" viewBox="0 0 100 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0C30 36 70 36 100 0V36H0V0Z" fill="white" fill-opacity="0.8"/></svg>');
+            background-size: cover;
+            background-repeat: no-repeat;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .header-glow {
+            position: absolute;
+            top: -60px; left: 50%; transform: translateX(-50%);
+            width: 320px; height: 120px;
+            background: radial-gradient(circle, #fff17655 0%, transparent 80%);
+            z-index: 0;
+            filter: blur(8px);
+            opacity: 0.7;
+        }
+        @media (max-width: 700px) {
+            .header {
+                padding: 1.2rem 0 0.7rem 0;
+                border-radius: 0 0 18px 18px;
+            }
+            .header-title {
+                font-size: 1.5em;
+            }
+            .header-logo-row {
+                gap: 0.5em;
+            }
+            .header-logo-icon {
+                font-size: 1.3em;
+            }
+            .header-tagline {
+                font-size: 1em;
+            }
+            .header-curve {
+                height: 18px;
+            }
+        }
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f7fafc 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+        }
+        .kanishka-container {
+            max-width: 900px;
+            /* was 650px, now wider */
+            margin: 48px auto 0 auto;
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 8px 32px rgba(0,123,255,0.10), 0 1.5px 8px rgba(0,196,140,0.07);
+            padding: 38px 48px 32px 48px;
+            /* was 32px, now more padding for width */
+            position: relative;
+            overflow: hidden;
+        }
+        .kanishka-container::before {
+            content: "";
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, #00c48c33 0%, transparent 80%);
+            z-index: 0;
+        }
+        .kanishka-header {
+            text-align: center;
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 1;
+        }
+        .kanishka-header h2 {
+            color: #007bff;
+            margin-bottom: 8px;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .kanishka-header p {
+            color: #555;
+            font-size: 1.08rem;
+            margin-bottom: 0;
+        }
+        .kanishka-section {
+            margin-bottom: 36px;
+            position: relative;
+            z-index: 1;
+        }
+        .kanishka-label {
+            font-weight: 600;
+            color: #007bff;
+            margin-bottom: 7px;
+            display: block;
+            letter-spacing: 0.2px;
+        }
+        .kanishka-input, .kanishka-textarea, .kanishka-select {
+            width: 100%;
+            border: 1.5px solid #cfd8dc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 1.08rem;
+            margin-bottom: 14px;
+            background: #f4f8fb;
+            transition: border 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px rgba(0,123,255,0.03);
+        }
+        .kanishka-input:focus, .kanishka-textarea:focus, .kanishka-select:focus {
+            border: 1.5px solid #00c48c;
+            outline: none;
+            box-shadow: 0 2px 8px #00c48c22;
+        }
+        .kanishka-btn {
+            background: linear-gradient(90deg, #007bff 60%, #00c48c 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 26px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.12s;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+            letter-spacing: 0.2px;
+        }
+        .kanishka-btn:last-child { margin-right: 0; }
+        .kanishka-btn:hover, .kanishka-btn:focus {
+            background: linear-gradient(90deg, #0056b3 60%, #009e6d 100%);
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 4px 16px #007bff22;
+        }
+        .kanishka-btn:active {
+            transform: scale(0.98);
+        }
+        .kanishka-result-card {
+            background: linear-gradient(90deg, #e3f2fd 80%, #f7fafc 100%);
+            border-radius: 12px;
+            padding: 18px 16px;
+            margin-top: 14px;
+            color: #007bff;
+            font-weight: 500;
+            font-size: 1.08rem;
+            box-shadow: 0 1px 6px #007bff11;
+            border-left: 4px solid #00c48c;
+            animation: fadeIn 0.5s;
+        }
+        .kanishka-tts-card {
+            background: linear-gradient(90deg, #e8f5e9 80%, #f7fafc 100%);
+            border-radius: 12px;
+            padding: 16px 14px;
+            margin-top: 12px;
+            color: #00c48c;
+            font-weight: 500;
+            font-size: 1.05rem;
+            box-shadow: 0 1px 6px #00c48c11;
+            border-left: 4px solid #007bff;
+            animation: fadeIn 0.5s;
+        }
+        #map {
+            height: 320px;
+            width: 100%;
+            margin-top: 18px;
+            border-radius: 14px;
+            border: 1.5px solid #cfd8dc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            z-index: 2;
+        }
+        .kanishka-section h3 {
+            color: #00c48c;
+            margin-bottom: 12px;
+            font-size: 1.18rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+        .kanishka-section .icon {
+            font-size: 1.3em;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        .kanishka-divider {
+            border: none;
+            border-top: 1.5px solid #e3f2fd;
+            margin: 32px 0 24px 0;
+        }
+        /* Subtle floating animation for icons */
+        .kanishka-header h2 .icon {
+            animation: float 2.5s ease-in-out infinite;
+            display: inline-block;
+        }
+        @keyframes float {
+            0%,100% { transform: translateY(0);}
+            50% { transform: translateY(-8px);}
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .kanishka-container { max-width: 98vw; padding-left: 2vw; padding-right: 2vw; }
+        }
+        @media (max-width: 700px) {
+            .kanishka-container { padding: 16px 2vw; }
+        }
+        @media (max-width: 480px) {
+            .kanishka-container { padding: 8px 0; }
+            .kanishka-header h2 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-glow"></div>
+        <div class="header-inner">
+            <div class="header-logo-row">
+                <span class="header-logo-icon">🌱</span>
+                <span class="header-title">ArogyaDeep</span>
+                <span class="header-logo-icon">🌱</span>
+            </div>
+            <div class="header-tagline">
+                Connecting rural communities to <span class="header-highlight">quality healthcare</span>
+            </div>
+        </div>
+        <div class="header-curve"></div>
+    </header>
+    <nav class="nav-tabs" style="display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 2em;">
+        <button class="nav-tab" onclick="window.location.href='index.html'">Home</button>
+        <button class="nav-tab" onclick="window.location.href='index.html#symptoms'">Enter Symptoms</button>
+        <button class="nav-tab" onclick="window.location.href='index.html#news'">Latest News</button>
+        <button class="nav-tab" onclick="window.location.href='index.html#reminders'">Reminders</button>
+        <button class="nav-tab active">Translational Tool</button>
+    </nav>
+    <div class="kanishka-container">
+        <div class="kanishka-header">
+            <h2><span class="icon">🤖</span>Translation Tool</h2>
+            <p>Voice-powered symptom checker, translation &amp; nearby doctors</p>
+        </div>
+        <div class="kanishka-section">
+            <label class="kanishka-label" for="symptoms">Enter your symptoms</label>
+            <input type="text" id="symptoms" class="kanishka-input" placeholder="e.g. fever, cough" autocomplete="off">
+            <div style="display:flex;gap:10px;">
+                <button class="kanishka-btn" type="button" onclick="startListening()">
+                    <span class="icon">🎤</span> Speak in Hindi
+                </button>
+                <button class="kanishka-btn" type="button" onclick="check()">
+                    <span class="icon">✅</span> Submit
+                </button>
+            </div>
+            <div id="result" class="kanishka-result-card" style="display:none;"></div>
+        </div>
+        <hr class="kanishka-divider">
+        <div class="kanishka-section">
+            <h3><span class="icon">🌍</span> Translator with Speech</h3>
+            <textarea id="input-text" class="kanishka-textarea" rows="3" placeholder="Type something..."></textarea>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <select id="target-language" class="kanishka-select" style="max-width:160px;">
+                    <option value="hi">Hindi</option>
+                    <option value="en">English</option>
+                </select>
+                <button class="kanishka-btn" type="button" onclick="translateAndSpeak()">
+                    <span class="icon">🔊</span> Translate &amp; Speak
+                </button>
+            </div>
+            <div id="translated-text" class="kanishka-tts-card" style="display:none;"></div>
+        </div>
+        <hr class="kanishka-divider">
+        <!-- Map section hidden for simplicity -->
+        <!--
+        <div class="kanishka-section">
+            <h3 style="color:#007bff;margin-bottom:10px;"><span class="icon">🗺️</span> Nearby Doctors in Belgaum</h3>
+            <div id="map"></div>
+        </div>
+        -->
+    </div>
+    <!-- Remove Leaflet and map JS for simplicity -->
+    <script>
+    // 🎤 Hindi Speech to English Text
+    function startListening() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('Speech recognition not supported in this browser.');
+            return;
+        }
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'hi-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = function(event) {
+            const hindiText = event.results[0][0].transcript;
+            animateInput('symptoms');
+            translateToEnglish(hindiText);
+        };
+
+        recognition.onerror = function(event) {
+            alert('Mic error: ' + event.error);
+        };
+
+        recognition.start();
+    }
+
+    function animateInput(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.boxShadow = '0 0 0 3px #00c48c55';
+        setTimeout(() => { el.style.boxShadow = ''; }, 700);
+    }
+
+    function translateToEnglish(text) {
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=hi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
+            .then(res => res.json())
+            .then(data => {
+                const translated = data[0].map(d => d[0]).join('');
+                document.getElementById('symptoms').value = translated;
+                animateInput('symptoms');
+                check();
+            })
+            .catch(err => alert('Could not translate the speech.'));
+    }
+
+    function check() {
+        const symptomText = document.getElementById('symptoms').value;
+        if (!symptomText.trim()) {
+            showResult('Please enter your symptoms.', true);
+            return;
+        }
+        const symptoms = symptomText.split(',').map(s => s.trim()).filter(Boolean);
+
+        fetch('/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ symptoms: symptoms })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Only show result if present, do not show "No result"
+            if (data.result) {
+                showResult(data.result);
+            }
+        })
+        .catch(err => showResult('Failed to send symptoms.', true));
+    }
+
+    function showResult(msg, isError) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.textContent = msg;
+        resultDiv.style.display = 'block';
+        resultDiv.style.background = isError ? 'linear-gradient(90deg,#ffebee 80%,#fff 100%)' : 'linear-gradient(90deg,#e3f2fd 80%,#f7fafc 100%)';
+        resultDiv.style.color = isError ? '#d32f2f' : '#007bff';
+        resultDiv.style.borderLeft = isError ? '4px solid #d32f2f' : '4px solid #00c48c';
+        resultDiv.style.animation = 'fadeIn 0.5s';
+    }
+
+    // 🗣 Text Translation + TTS
+    async function translateText(text, targetLang) {
+        const sourceLang = targetLang === 'hi' ? 'en' : 'hi';
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data.responseData.translatedText;
+    }
+
+    function speakText(text, lang) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = speechSynthesis.getVoices();
+        const desiredLang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+        const voice = voices.find(v => v.lang === desiredLang) || voices.find(v => v.lang.startsWith(lang)) || voices[0];
+        utterance.voice = voice;
+        utterance.lang = voice ? voice.lang : (lang === 'hi' ? 'hi-IN' : 'en-IN');
+        speechSynthesis.speak(utterance);
+    }
+
+    async function translateAndSpeak() {
+        const text = document.getElementById('input-text').value.trim();
+        const lang = document.getElementById('target-language').value;
+        const ttsDiv = document.getElementById('translated-text');
+        if (!text) return;
+        ttsDiv.style.display = 'block';
+        ttsDiv.textContent = 'Translating...';
+        ttsDiv.style.background = 'linear-gradient(90deg,#e8f5e9 80%,#f7fafc 100%)';
+        ttsDiv.style.color = '#00c48c';
+        ttsDiv.style.borderLeft = '4px solid #007bff';
+        try {
+            const translated = await translateText(text, lang);
+            ttsDiv.textContent = translated;
+            setTimeout(() => speakText(translated, lang), 500);
+        } catch {
+            ttsDiv.textContent = 'Translation failed';
+            ttsDiv.style.background = 'linear-gradient(90deg,#ffebee 80%,#fff 100%)';
+            ttsDiv.style.color = '#d32f2f';
+            ttsDiv.style.borderLeft = '4px solid #d32f2f';
+        }
+    }
+
+    // Preload voices
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+    </script>
+</body>
+</html>

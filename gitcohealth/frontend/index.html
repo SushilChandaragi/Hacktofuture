@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Symptom Checker with Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArogyaDeep - Rural Healthcare System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* --- Polished, Professional, Aesthetic Header --- */
+        .header {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            background: linear-gradient(90deg, #1976d2 0%, #43a047 100%);
+            color: #fff;
+            padding: 2.5rem 0 1.5rem 0;
+            text-align: center;
+            z-index: 100;
+            border-radius: 0 0 32px 32px;
+            box-shadow: 0 8px 32px 0 rgba(25, 118, 210, 0.10), 0 2px 8px 0 rgba(67,160,71,0.08);
+            overflow: visible;
+        }
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .header-logo-row {
+            display: flex;
+            align-items: center;
+            gap: 1.1em;
+            margin-bottom: 0.3em;
+        }
+        .header-logo-icon {
+            font-size: 2.2em;
+            filter: drop-shadow(0 2px 8px rgba(67,160,71,0.13));
+            animation: headerIconFloat 2.5s ease-in-out infinite;
+        }
+        @keyframes headerIconFloat {
+            0%,100% { transform: translateY(0);}
+            50% { transform: translateY(-8px);}
+        }
+        .header-title {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            font-size: 2.7em;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            background: linear-gradient(90deg, #fff 10%, #ffeb3b 90%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            padding: 0 0.25em;
+            text-shadow: 0 2px 8px rgba(25,118,210,0.07);
+        }
+        .header-tagline {
+            font-size: 1.25em;
+            font-weight: 500;
+            color: #e3f2fd;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.2em;
+        }
+        .header-highlight {
+            color: #ffeb3b;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ff9800 0%, #ffd600 100%);
+            padding: 0 0.25em;
+            border-radius: 0.4em;
+            box-shadow: 0 2px 8px #ffeb3b22;
+        }
+        .header-curve {
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            width: 100%;
+            height: 36px;
+            background: url('data:image/svg+xml;utf8,<svg width="100%" height="36" viewBox="0 0 100 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0C30 36 70 36 100 0V36H0V0Z" fill="white" fill-opacity="0.8"/></svg>');
+            background-size: cover;
+            background-repeat: no-repeat;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .header-glow {
+            position: absolute;
+            top: -60px; left: 50%; transform: translateX(-50%);
+            width: 320px; height: 120px;
+            background: radial-gradient(circle, #fff17655 0%, transparent 80%);
+            z-index: 0;
+            filter: blur(8px);
+            opacity: 0.7;
+        }
+        @media (max-width: 700px) {
+            .header {
+                padding: 1.2rem 0 0.7rem 0;
+                border-radius: 0 0 18px 18px;
+            }
+            .header-title {
+                font-size: 1.5em;
+            }
+            .header-logo-row {
+                gap: 0.5em;
+            }
+            .header-logo-icon {
+                font-size: 1.3em;
+            }
+            .header-tagline {
+                font-size: 1em;
+            }
+            .header-curve {
+                height: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <header class="header">
+        <div class="header-glow"></div>
+        <div class="header-inner">
+            <div class="header-logo-row">
+                <span class="header-logo-icon">🌱</span>
+                <span class="header-title">ArogyaDeep</span>
+                <span class="header-logo-icon">🌱</span>
+            </div>
+            <div class="header-tagline">
+                Connecting rural communities to <span class="header-highlight">quality healthcare</span>
+            </div>
+        </div>
+        <div class="header-curve"></div>
+    </header>
+        <nav class="nav-tabs" style="display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 2em;">
+            <button class="nav-tab active" onclick="showPage('home')">Home</button>
+            <button class="nav-tab" onclick="showPage('symptoms')">Enter Symptoms</button>
+            <button class="nav-tab" onclick="showPage('news')">Latest News</button>
+            <button class="nav-tab" onclick="showPage('reminders')">Reminders</button>
+            <a class="nav-tab" href="kanishka.html" style="text-decoration:none; padding:0; margin:0;">
+                <button class="nav-tab">Translational Tool</button>
+            </a>
+        </nav>
+        <main>
+            <div id="home" class="page active">
+                <div class="profile-section" id="profile-section">
+                  <div class="profile-pic" id="profile-pic">👤</div>
+                  <!-- HIGHLIGHT START: Welcome User Section -->
+                  <div id="profile-form-section" class="profile-card animated-fadein profile-form-animate">
+                    <form id="profile-form" onsubmit="event.preventDefault(); setProfile();">
+                      <div class="profile-form-header">
+                        <span class="profile-form-icon">📝</span>
+                        <h3 class="profile-form-title">Let's Get To Know You</h3>
+                      </div>
+                      <hr class="profile-form-divider"/>
+                      <div class="form-group">
+                        <label for="profile-name">Name:</label>
+                        <input type="text" id="profile-name" placeholder="Enter your name" required autocomplete="off">
+                      </div>
+                      <div class="form-group">
+                        <label for="profile-age">Age:</label>
+                        <input type="number" id="profile-age" placeholder="Enter your age" required min="1" max="120">
+                      </div>
+                      <div class="form-group">
+                        <label for="profile-gender">Gender:</label>
+                        <select id="profile-gender" required>
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <button class="btn profile-btn" type="submit">
+                        <span>Enter</span>
+                        <span class="profile-btn-arrow">→</span>
+                      </button>
+                    </form>
+                  </div>
+                  <div id="profile-display-section" class="hidden profile-card animated-fadein profile-form-animate">
+                    <div class="profile-greeting">
+                      <span class="profile-form-icon">🎉</span>
+                      <h2 id="profile-welcome" style="color:#1976d2;"></h2>
+                      <p id="profile-details" style="color:#388e3c;"></p>
+                    </div>
+                  </div>
+                  <!-- HIGHLIGHT END -->
+                </div>
+                <script>
+                function setProfile() {
+                  const name = document.getElementById('profile-name').value.trim();
+                  const age = document.getElementById('profile-age').value.trim();
+                  const gender = document.getElementById('profile-gender').value;
+                  if (!name || !age || !gender) return;
+                  document.getElementById('profile-form-section').classList.add('hidden');
+                  document.getElementById('profile-display-section').classList.remove('hidden');
+                  document.getElementById('profile-welcome').textContent = `Welcome, ${name}`;
+                  document.getElementById('profile-details').textContent = `Age: ${age} | Gender: ${gender.charAt(0).toUpperCase() + gender.slice(1)}`;
+                  // Optionally, change profile-pic icon based on gender
+                  const pic = document.getElementById('profile-pic');
+                  if (gender === 'male') pic.textContent = '👨';
+                  else if (gender === 'female') pic.textContent = '👩';
+                  else pic.textContent = '👤';
+                }
+                </script>
+                <div class="task-grid">
+                    <div class="task-card" onclick="showPage('symptoms')">
+                        <div class="task-icon">🩺</div>
+                        <h3>Enter Your Symptoms</h3>
+                        <p>Get instant health assessment and recommendations</p>
+                    </div>
+                    <div class="task-card" onclick="showPage('news')">
+                        <div class="task-icon">📰</div>
+                        <h3>Latest News</h3>
+                        <p>Stay updated with medical news and health tips</p>
+                    </div>
+                    <div class="task-card" onclick="showPage('reminders')">
+                        <div class="task-icon">📅</div>
+                        <h3>Reminders</h3>
+                        <p>Track vaccination dates and appointments</p>
+                    </div>
+                </div>
+                <section class="about-section improved-about">
+                    <h2 class="about-title">
+                        <span class="about-icon">✨</span>
+                        About Our System
+                    </h2>
+                    <ul class="about-list">
+                        <li>
+                            <span class="about-bullet" style="background:linear-gradient(135deg,#43a047,#1976d2);">🤖</span>
+                            <span class="about-text">AI-powered symptom analysis &amp; health recommendations</span>
+                        </li>
+                        <li>
+                            <span class="about-bullet" style="background:linear-gradient(135deg,#ffb300,#ff7043);">📰</span>
+                            <span class="about-text">Latest medical news &amp; health awareness</span>
+                        </li>
+                        <li>
+                            <span class="about-bullet" style="background:linear-gradient(135deg,#00bcd4,#43a047);">💉</span>
+                            <span class="about-text">Vaccination tracking &amp; health reminders</span>
+                        </li>
+                        <li>
+                            <span class="about-bullet" style="background:linear-gradient(135deg,#ab47bc,#1976d2);">🌾</span>
+                            <span class="about-text">Minimal, rural-friendly, easy-to-use interface</span>
+                        </li>
+                        <li>
+                            <span class="about-bullet" style="background:linear-gradient(135deg,#ff7043,#ffd600);">🌐</span>
+                            <span class="about-text">Multilingual support for accessibility</span>
+                        </li>
+                    </ul>
+                </section>
+                <style>
+                .improved-about {
+                    background: linear-gradient(120deg, #e3f2fd 60%, #fffde7 100%);
+                    border-radius: 1.5em;
+                    box-shadow: 0 4px 24px 0 rgba(25, 118, 210, 0.07), 0 1.5px 6px 0 rgba(67, 160, 71, 0.08);
+                    padding: 2.2em 1.5em 1.5em 1.5em;
+                    margin: 2.5em 0 2em 0;
+                    max-width: 540px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    position: relative;
+                    overflow: hidden;
+                    transition: box-shadow 0.2s;
+                }
+                .improved-about:hover {
+                    box-shadow: 0 8px 32px 0 rgba(25, 118, 210, 0.13), 0 3px 12px 0 rgba(67, 160, 71, 0.12);
+                }
+                .about-title {
+                    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+                    font-size: 2em;
+                    font-weight: 800;
+                    letter-spacing: 1.2px;
+                    color: #1976d2;
+                    margin-bottom: 1.1em;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                    background: linear-gradient(90deg, #1976d2 60%, #43a047 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    text-fill-color: transparent;
+                }
+                .about-icon {
+                    font-size: 1.3em;
+                    filter: drop-shadow(0 2px 8px #ffd60044);
+                    animation: aboutIconGlow 2.5s ease-in-out infinite;
+                }
+                @keyframes aboutIconGlow {
+                    0%,100% { filter: drop-shadow(0 2px 8px #ffd60044);}
+                    50% { filter: drop-shadow(0 4px 16px #ffd60099);}
+                }
+                .about-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.1em;
+                }
+                .about-list li {
+                    display: flex;
+                    align-items: center;
+                    gap: 1em;
+                    background: rgba(255,255,255,0.7);
+                    border-radius: 0.8em;
+                    padding: 0.7em 1em;
+                    box-shadow: 0 1px 6px #1976d211;
+                    transition: background 0.2s;
+                }
+                .about-list li:hover {
+                    background: linear-gradient(90deg,#e3f2fd 80%,#fffde7 100%);
+                }
+                .about-bullet {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 2.3em;
+                    height: 2.3em;
+                    font-size: 1.3em;
+                    border-radius: 50%;
+                    box-shadow: 0 2px 8px #1976d222;
+                    color: #fff;
+                    flex-shrink: 0;
+                }
+                .about-text {
+                    font-size: 1.08em;
+                    font-weight: 500;
+                    color: #333;
+                    letter-spacing: 0.2px;
+                }
+                @media (max-width: 700px) {
+                    .improved-about {
+                        padding: 1.2em 0.7em 1em 0.7em;
+                        border-radius: 1em;
+                    }
+                    .about-title {
+                        font-size: 1.2em;
+                    }
+                    .about-bullet {
+                        width: 1.7em;
+                        height: 1.7em;
+                        font-size: 1em;
+                    }
+                    .about-list li {
+                        padding: 0.5em 0.7em;
+                        border-radius: 0.6em;
+                    }
+                }
+                </style>
+                <div class="team-section">
+                    <h2>Our Team</h2>
+                    <div class="team-grid team-grid-row">
+                        <div class="team-member">
+                            <div class="team-icon">👨‍💼</div>
+                            <div class="team-name">Sushil Chandaragi</div>
+                            <a href="https://www.linkedin.com/in/sushilchandaragi" target="_blank" class="team-linkedin" aria-label="Sushil Chandaragi LinkedIn">
+                                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg" alt="LinkedIn" style="width:24px;height:24px;vertical-align:middle;filter:grayscale(0%) brightness(0.7);" />
+                            </a>
+                        </div>
+                        <div class="team-member">
+                            <div class="team-icon">👩‍💼</div>
+                            <div class="team-name">Ressha Koli</div>
+                            <a href="https://www.linkedin.com/in/resshakoli" target="_blank" class="team-linkedin" aria-label="Ressha Koli LinkedIn">
+                                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg" alt="LinkedIn" style="width:24px;height:24px;vertical-align:middle;filter:grayscale(0%) brightness(0.7);" />
+                            </a>
+                        </div>
+                        <div class="team-member">
+                            <div class="team-icon">👨‍💻</div>
+                            <div class="team-name">Ankit Raj</div>
+                            <a href="https://www.linkedin.com/in/ankitr" target="_blank" class="team-linkedin" aria-label="Ankit R LinkedIn">
+                                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg" alt="LinkedIn" style="width:24px;height:24px;vertical-align:middle;filter:grayscale(0%) brightness(0.7);" />
+                            </a>
+                        </div>
+                        <div class="team-member">
+                            <div class="team-icon">👩‍💻</div>
+                            <div class="team-name">Kanishka Naik</div>
+                            <a href="https://www.linkedin.com/in/kanishkan" target="_blank" class="team-linkedin" aria-label="Kanishka N LinkedIn">
+                                <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg" alt="LinkedIn" style="width:24px;height:24px;vertical-align:middle;filter:grayscale(0%) brightness(0.7);" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                .team-grid.team-grid-row {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                    align-items: stretch;
+                    gap: 2em;
+                    margin-top: 1.5em;
+                }
+                .team-member {
+                    background: #fff;
+                    padding: 1.2em 1em;
+                    border-radius: 10px;
+                    text-align: center;
+                    box-shadow: 0 2px 8px rgba(30,60,114,0.07);
+                    flex: 1 1 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    min-width: 140px;
+                    max-width: 200px;
+                }
+                .team-icon {
+                    font-size: 2.2em;
+                    margin-bottom: 0.3em;
+                }
+                .team-name {
+                    font-size: 1.08em;
+                    font-weight: 600;
+                    margin-bottom: 0.4em;
+                    color: #1976d2;
+                }
+                .team-linkedin img {
+                    margin-top: 0.2em;
+                    transition: filter 0.2s;
+                }
+                .team-linkedin img:hover {
+                    filter: brightness(1.2) drop-shadow(0 2px 6px #1976d2aa);
+                }
+                @media (max-width: 900px) {
+                    .team-grid.team-grid-row {
+                        flex-direction: column;
+                        gap: 1em;
+                        align-items: center;
+                    }
+                    .team-member {
+                        max-width: 320px;
+                        width: 100%;
+                    }
+                }
+                </style>
+            </div>
+            <div id="symptoms" class="page">
+                <h2>🩺 Symptom Checker</h2>
+                <form class="symptoms-form" onsubmit="event.preventDefault();analyzeSymptoms();">
+                    <div class="form-group"><label for="age">Age:</label><input type="number" id="age" placeholder="Enter your age"></div>
+                    <div class="form-group"><label for="gender">Gender:</label>
+                        <select id="gender">
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="symptoms-textarea">Describe your symptoms:</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <textarea id="symptoms-textarea" rows="4" placeholder="Please describe your symptoms in detail..."></textarea>
+                            <button type="button" class="btn" id="voice-btn" title="Speak in Hindi" style="height:44px;min-width:44px;padding:0 12px;">
+                                <span style="font-size:1.3em;">🎤</span>
+                            </button>
+                        </div>
+                        <div id="voice-status" style="font-size:0.95em;color:#1976d2;margin-top:2px;display:none;">Listening...</div>
+                    </div>
+                    <div class="form-group"><label for="duration">How long have you had these symptoms?</label>
+                        <select id="duration">
+                            <option value="">Select Duration</option>
+                            <option value="less-than-day">Less than a day</option>
+                            <option value="1-3-days">1-3 days</option>
+                            <option value="4-7-days">4-7 days</option>
+                            <option value="more-than-week">More than a week</option>
+                            <option value="chronic">Chronic (ongoing)</option>
+                        </select>
+                    </div>
+                    <button class="btn" type="submit">Analyze Symptoms</button>
+                </form>
+                <div id="results" class="hidden">
+                    <h3>Analysis Results</h3>
+                    <div id="result-content"></div>
+                    <button id="translate-btn" class="btn hidden" type="button" onclick="translateResult()">Translate to Hindi</button>
+                    <div id="translated-result" class="result-card" style="margin-top:10px; display:none;"></div>
+                </div>
+                <div id="doctors-nearby-section" class="map-section">
+                    <h3 class="map-heading">🗺️ Doctors Near You</h3>
+                    <div id="map"></div>
+                </div>
+            </div>
+            <div id="news" class="page">
+                <h2>📰 Latest Medical News</h2>
+                <div class="news-grid">
+                    <div class="news-item"><h3>New Vaccination Drive Launched in Rural Areas</h3><p class="news-date">May 25, 2025</p><p>The government has announced a comprehensive vaccination drive targeting rural communities to improve healthcare coverage and prevent seasonal diseases.</p></div>
+                    <div class="news-item"><h3>Telemedicine Services Expanding to Remote Villages</h3><p class="news-date">May 22, 2025</p><p>Digital healthcare platforms are now reaching remote villages, providing access to specialist consultations and medical advice through mobile networks.</p></div>
+                    <div class="news-item"><h3>Monsoon Health Advisory: Prevention Tips</h3><p class="news-date">May 20, 2025</p><p>Health experts share essential tips to prevent monsoon-related diseases like malaria, dengue, and water-borne infections in rural communities.</p></div>
+                    <div class="news-item"><h3>Mobile Health Units Serve 50,000+ Rural Patients</h3><p class="news-date">May 18, 2025</p><p>State mobile health units have successfully provided medical services to over 50,000 patients in remote areas, significantly improving healthcare accessibility.</p></div>
+                    <div class="news-item"><h3>Traditional Medicine Integration in Rural Healthcare</h3><p class="news-date">May 15, 2025</p><p>New initiative combines traditional healing practices with modern medicine to provide culturally appropriate healthcare solutions for rural populations.</p></div>
+                </div>
+            </div>
+            <div id="reminders" class="page">
+                <h2>📅 Health Reminders & Vaccination Calendar</h2>
+                <div class="calendar" id="calendar-container">
+                    <div class="calendar-header">
+                        <select id="calendar-month"></select>
+                        <select id="calendar-year"></select>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
+                <div class="vaccination-list">
+                    <h3>📋 Upcoming Vaccinations</h3>
+                    <div id="vaccination-reminders-list">
+                        <!-- Existing reminders -->
+                        <div class="result-card"><h4>🩹 June 5, 2025 - Hepatitis B Booster</h4><p>Second dose of Hepatitis B vaccination for adults. Visit the local health center between 9 AM - 4 PM.</p></div>
+                        <div class="result-card"><h4>🩹 June 12, 2025 - Seasonal Flu Vaccine</h4><p>Annual influenza vaccination recommended for all age groups. Mobile health unit will be available.</p></div>
+                        <div class="result-card"><h4>🩹 June 20, 2025 - Tetanus Shot</h4><p>Tetanus booster vaccination (every 10 years). Especially important for farmers and manual workers.</p></div>
+                        <div class="result-card"><h4>🩹 June 28, 2025 - COVID-19 Booster</h4><p>Updated COVID-19 booster dose. Free vaccination camp at the community center.</p></div>
+                    </div>
+                    <form id="add-vaccine-form" style="margin-top:1em;display:flex;flex-wrap:wrap;gap:0.5em;align-items:center;">
+                        <input type="text" id="vaccine-title" placeholder="Vaccine Title & Date" required style="flex:1;min-width:120px;">
+                        <input type="text" id="vaccine-desc" placeholder="Description" required style="flex:2;min-width:180px;">
+                        <button type="submit" class="btn" style="padding:0.3em 1em;">Add</button>
+                    </form>
+                </div>
+                <div class="about-section">
+                    <h3>⚡ Health Reminders</h3>
+                    <div class="reminders-list" id="health-reminders-list">
+                        <div class="reminder-card risk-low">
+                            <span class="reminder-icon" style="font-size:2em;vertical-align:middle;">💊</span>
+                            <div class="reminder-content">
+                                <h4 class="reminder-title">Daily Medication Reminder</h4>
+                                <p class="reminder-desc">Don't forget to take your prescribed medications. Set daily alarms for consistent treatment.</p>
+                            </div>
+                        </div>
+                        <div class="reminder-card risk-moderate">
+                            <span class="reminder-icon" style="font-size:2em;vertical-align:middle;">🏃‍♂️</span>
+                            <div class="reminder-content">
+                                <h4 class="reminder-title">Weekly Health Check</h4>
+                                <p class="reminder-desc">Monitor your blood pressure and weight weekly. Record in your health diary.</p>
+                            </div>
+                        </div>
+                        <div class="reminder-card risk-low">
+                            <span class="reminder-icon" style="font-size:2em;vertical-align:middle;">🦷</span>
+                            <div class="reminder-content">
+                                <h4 class="reminder-title">Dental Care Reminder</h4>
+                                <p class="reminder-desc">Schedule your bi-annual dental check-up. Next appointment due: August 2025.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <form id="add-health-form" style="margin-top:1em;display:flex;flex-wrap:wrap;gap:0.5em;align-items:center;">
+                        <input type="text" id="health-icon" placeholder="Icon (e.g. 💊)" maxlength="2" style="width:3em;">
+                        <input type="text" id="health-title" placeholder="Title" required style="flex:1;min-width:120px;">
+                        <input type="text" id="health-desc" placeholder="Description" required style="flex:2;min-width:180px;">
+                        <select id="health-risk" style="min-width:90px;">
+                            <option value="risk-low">Low</option>
+                            <option value="risk-moderate">Moderate</option>
+                            <option value="risk-high">High</option>
+                        </select>
+                        <button type="submit" class="btn" style="padding:0.3em 1em;">Add</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Remove the doctors page and move map back outside main -->
+        </main>
+    </div>
+    <!-- Team member reusable template -->
+    <template id="team-member-template">
+        <div class="team-member">
+            <div class="team-icon"></div>
+            <h4 class="team-name"></h4>
+            <p class="team-role"></p>
+        </div>
+    </template>
+    <!-- Bubble reusable template -->
+    <template id="bubble-template">
+        <div class="bubble"></div>
+    </template>
+    <script>
+        // Save and restore current page using localStorage
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            const targetTab = Array.from(document.querySelectorAll('.nav-tab')).find(tab => tab.textContent.toLowerCase().includes(pageId));
+            if (targetTab) targetTab.classList.add('active');
+            // Save current page to localStorage
+            localStorage.setItem('currentPage', pageId);
+
+            // Show/hide map only on symptoms page
+            const mapSection = document.getElementById('doctors-nearby-section');
+            if (mapSection) {
+                if (pageId === 'symptoms') {
+                    mapSection.style.display = '';
+                    setTimeout(() => {
+                        if (!window._mapInitialized) {
+                            initMap();
+                            window._mapInitialized = true;
+                        }
+                    }, 100);
+                } else {
+                    mapSection.style.display = 'none';
+                }
+            }
+        }
+
+        function initMap() {
+            if (window._leafletMap) return;
+            window._leafletMap = L.map('map').setView([15.8497, 74.4977], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(window._leafletMap);
+            fetch('/doctors')
+                .then(response => response.json())
+                .then(doctors => {
+                    doctors.forEach(doc => {
+                        L.marker([doc.lat, doc.lon])
+                            .addTo(window._leafletMap)
+                            .bindPopup(`<b>${doc.name}</b><br>${doc.specialty}<br><b>Time:</b> ${doc.timing}`);
+                    });
+                });
+            setTimeout(() => {
+                window._leafletMap.invalidateSize();
+            }, 200);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const lastPage = localStorage.getItem('currentPage') || 'home';
+            showPage(lastPage);
+
+            // Team members data (remove role)
+            const teamMembers = [
+                { name: "Reesha", icon: "👨‍⚕️" },
+                { name: "Sushil", icon: "👩‍⚕️" },
+                { name: "Ankit", icon: "👶" },
+                { name: "Kanishka", icon: "❤️" }
+            ];
+
+            const teamGrid = document.getElementById('team-grid');
+            teamMembers.forEach(member => {
+                const memberDiv = document.getElementById('team-member-template').content.cloneNode(true);
+                memberDiv.querySelector('.team-icon').textContent = member.icon;
+                memberDiv.querySelector('.team-name').textContent = member.name;
+                // Remove the role element
+                memberDiv.querySelector('.team-role').remove();
+                teamGrid.appendChild(memberDiv);
+            });
+
+            // Initialize calendar
+            const calendarMonth = document.getElementById('calendar-month');
+            const calendarYear = document.getElementById('calendar-year');
+            const calendarGrid = document.getElementById('calendar-grid');
+            const today = new Date();
+            let currentMonth = today.getMonth();
+            let currentYear = today.getFullYear();
+
+            // Store marked days in memory (optionally use localStorage for persistence)
+            let markedDays = {};
+
+            function getMonthYearKey(month, year) {
+                return `${year}-${month}`;
+            }
+
+            function updateCalendar(month, year) {
+                const calendarGrid = document.getElementById('calendar-grid');
+                calendarGrid.innerHTML = '';
+                // Add weekday headers
+                const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                weekdays.forEach(day => {
+                    const wd = document.createElement('div');
+                    wd.textContent = day;
+                    wd.style.fontWeight = '700';
+                    wd.style.color = '#388e3c';
+                    wd.style.background = 'transparent';
+                    wd.style.border = 'none';
+                    wd.style.fontSize = '1em';
+                    wd.style.marginBottom = '0.2em';
+                    wd.style.textAlign = 'center';
+                    calendarGrid.appendChild(wd);
+                });
+                // Calculate days
+                const firstDay = new Date(year, month).getDay();
+                const lastDate = new Date(year, month + 1, 0).getDate();
+                const today = new Date();
+                const monthYearKey = `${year}-${month}`;
+                if (!window.markedDays) window.markedDays = {};
+                if (!window.markedDays[monthYearKey]) window.markedDays[monthYearKey] = {};
+                // Fill blanks for first week
+                for (let i = 0; i < firstDay; i++) {
+                    const blankDay = document.createElement('div');
+                    blankDay.className = 'calendar-day';
+                    blankDay.style.background = 'none';
+                    blankDay.style.cursor = 'default';
+                    blankDay.style.boxShadow = 'none';
+                    blankDay.style.pointerEvents = 'none';
+                    calendarGrid.appendChild(blankDay);
+                }
+                // Fill days of month
+                for (let date = 1; date <= lastDate; date++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'calendar-day';
+                    dayDiv.textContent = date;
+                    // Highlight today's date
+                    if (
+                        date === today.getDate() &&
+                        month === today.getMonth() &&
+                        year === today.getFullYear()
+                    ) {
+                        dayDiv.classList.add('today');
+                    }
+                    // Add medicine icon if marked
+                    if (window.markedDays[monthYearKey][date]) {
+                        const iconSpan = document.createElement('span');
+                        iconSpan.className = 'calendar-icon';
+                        iconSpan.textContent = '💊';
+                        dayDiv.appendChild(iconSpan);
+                    }
+                    // Toggle medicine icon on click
+                    dayDiv.addEventListener('click', function () {
+                        if (window.markedDays[monthYearKey][date]) {
+                            delete window.markedDays[monthYearKey][date];
+                        } else {
+                            window.markedDays[monthYearKey][date] = true;
+                        }
+                        updateCalendar(month, year);
+                    });
+                    calendarGrid.appendChild(dayDiv);
+                }
+                // Fill blanks for last week
+                const totalCells = firstDay + lastDate;
+                const remainingCells = 7 - (totalCells % 7 === 0 ? 7 : totalCells % 7);
+                for (let i = 0; i < remainingCells; i++) {
+                    const blankDay = document.createElement('div');
+                    blankDay.className = 'calendar-day';
+                    blankDay.style.background = 'none';
+                    blankDay.style.cursor = 'default';
+                    blankDay.style.boxShadow = 'none';
+                    blankDay.style.pointerEvents = 'none';
+                    calendarGrid.appendChild(blankDay);
+                }
+            }
+
+            // Populate month and year selectors
+            for (let m = 0; m < 12; m++) {
+                const monthOption = document.createElement('option');
+                monthOption.value = m;
+                monthOption.textContent = new Date(0, m).toLocaleString('default', { month: 'long' });
+                calendarMonth.appendChild(monthOption);
+            }
+
+            for (let y = today.getFullYear() - 5; y <= today.getFullYear() + 5; y++) {
+                const yearOption = document.createElement('option');
+                yearOption.value = y;
+                yearOption.textContent = y;
+                calendarYear.appendChild(yearOption);
+            }
+
+            calendarMonth.value = currentMonth;
+            calendarYear.value = currentYear;
+            updateCalendar(currentMonth, currentYear);
+
+            calendarMonth.addEventListener('change', function() {
+                updateCalendar(parseInt(calendarMonth.value), parseInt(calendarYear.value));
+            });
+
+            calendarYear.addEventListener('change', function() {
+                updateCalendar(parseInt(calendarMonth.value), parseInt(calendarYear.value));
+            });
+        });
+        // This function is defined in the global scope:
+        async function analyzeSymptoms() {
+            const symptomsInput = document.getElementById('symptoms-textarea');
+            if (!symptomsInput) {
+                alert('Symptoms input not found.');
+                return;
+            }
+            const symptoms = symptomsInput.value;
+            // if (!symptoms || !symptoms.trim()) {
+            //     alert('Please describe your symptoms');
+            //     return;
+            // }
+            const resultsDiv = document.getElementById('results');
+            const contentDiv = document.getElementById('result-content');
+            resultsDiv.classList.remove('hidden');
+            contentDiv.innerHTML = `<div class="result-card"><em>Analyzing symptoms, please wait...</em></div>`;
+            document.getElementById('translate-btn').classList.add('hidden');
+            document.getElementById('translated-result').style.display = 'none';
+            try {
+                const res = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symptoms })
+                });
+                const data = await res.json();
+                if (data.response && data.response !== 'Error') {
+                    contentDiv.innerHTML = `<div class="result-card">${data.response.replace(/\n/g, "<br>")}</div>`;
+                    document.getElementById('translate-btn').classList.remove('hidden');
+                } else {
+                    contentDiv.innerHTML = `<div class="result-card risk-high">Sorry, there was an error analyzing your symptoms.<br>${data.error || ''}</div>`;
+                }
+            } catch (e) {
+                console.error('Fetch error:', e);
+                contentDiv.innerHTML = `<div class="result-card risk-high">Sorry, there was an error connecting to the server.</div>`;
+            }
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function translateResult() {
+            const contentDiv = document.getElementById('result-content');
+            const resultText = contentDiv.innerText || contentDiv.textContent;
+            const translatedDiv = document.getElementById('translated-result');
+            translatedDiv.style.display = 'block';
+            translatedDiv.innerHTML = `<em>Translating...</em>`;
+            try {
+                const res = await fetch('https://libretranslate.de/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        q: resultText,
+                        source: 'en',
+                        target: 'hi',
+                        format: 'text'
+                    })
+                });
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await res.json();
+                if (data.translatedText) {
+                    translatedDiv.innerHTML = `<strong>हिंदी अनुवाद:</strong><br>${data.translatedText.replace(/\n/g, "<br>")}`;
+                } else {
+                    translatedDiv.innerHTML = `<span style="color:red;">Translation failed.</span>`;
+                }
+            } catch (e) {
+                translatedDiv.innerHTML = `<span style="color:red;">Translation service is currently unavailable. Please try again later.</span>`;
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+    // Minimal, clean calendar rendering for reminders section with pill icon toggle
+    let markedDays = {}; // { "YYYY-MM": { day: true } }
+
+    function renderCalendar(month, year) {
+        const calendarGrid = document.getElementById('calendar-grid');
+        calendarGrid.innerHTML = '';
+        // Weekday headers
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(day=>{
+            const wd = document.createElement('div');
+            wd.textContent = day;
+            wd.style.fontWeight = 'bold';
+            wd.style.color = '#1976d2';
+            wd.style.background = 'none';
+            wd.style.textAlign = 'center';
+            calendarGrid.appendChild(wd);
+        });
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
+        const monthYearKey = `${year}-${month}`;
+        if (!markedDays[monthYearKey]) markedDays[monthYearKey] = {};
+
+        // Blanks before first day
+        for(let i=0;i<firstDay;i++){
+            const blank = document.createElement('div');
+            blank.className = 'calendar-day';
+            blank.style.background = 'none';
+            blank.style.cursor = 'default';
+            blank.style.boxShadow = 'none';
+            blank.style.pointerEvents = 'none';
+            calendarGrid.appendChild(blank);
+        }
+        // Days of month
+        for(let date=1;date<=lastDate;date++){
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            dayDiv.textContent = date;
+            if(date===today.getDate() && month===today.getMonth() && year===today.getFullYear()){
+                dayDiv.classList.add('today');
+            }
+            // Show pill icon if marked
+            if (markedDays[monthYearKey][date]) {
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'calendar-icon';
+                iconSpan.textContent = '💊';
+                iconSpan.style.marginLeft = '0.3em';
+                dayDiv.appendChild(iconSpan);
+            }
+            // Toggle pill icon on click
+            dayDiv.addEventListener('click', function () {
+                if (markedDays[monthYearKey][date]) {
+                    delete markedDays[monthYearKey][date];
+                } else {
+                    markedDays[monthYearKey][date] = true;
+                }
+                renderCalendar(month, year);
+            });
+            calendarGrid.appendChild(dayDiv);
+        }
+        // Fill last row
+        const totalCells = firstDay + lastDate + 7; // +7 for weekday headers
+        const remaining = 7 - (totalCells % 7 === 0 ? 7 : totalCells % 7);
+        for(let i=0;i<remaining;i++){
+            const blank = document.createElement('div');
+            blank.className = 'calendar-day';
+            blank.style.background = 'none';
+            blank.style.cursor = 'default';
+            blank.style.boxShadow = 'none';
+            blank.style.pointerEvents = 'none';
+            calendarGrid.appendChild(blank);
+        }
+    }
+    // Setup calendar selectors for reminders section
+    document.addEventListener('DOMContentLoaded', function() {
+        // ...existing code...
+        const calendarMonth = document.getElementById('calendar-month');
+        const calendarYear = document.getElementById('calendar-year');
+        const today = new Date();
+        for(let m=0;m<12;m++){
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = new Date(0,m).toLocaleString('default',{month:'long'});
+            calendarMonth.appendChild(opt);
+        }
+        for(let y=today.getFullYear()-5;y<=today.getFullYear()+5;y++){
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            calendarYear.appendChild(opt);
+        }
+        calendarMonth.value = today.getMonth();
+        calendarYear.value = today.getFullYear();
+        function updateCal(){
+            renderCalendar(parseInt(calendarMonth.value), parseInt(calendarYear.value));
+        }
+        calendarMonth.addEventListener('change', updateCal);
+        calendarYear.addEventListener('change', updateCal);
+        updateCal();
+        // ...existing code...
+    });
+    // --- Voice (Hindi) to Text for Symptoms ---
+    let lastEnglishSymptoms = ""; // Store the translated English text for Gemini
+
+    function startHindiVoiceInput() {
+        const status = document.getElementById('voice-status');
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('Speech recognition not supported in this browser.');
+            return;
+        }
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'hi-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = function() {
+            if (status) { status.style.display = 'inline'; status.textContent = 'Listening...'; }
+        };
+        recognition.onend = function() {
+            if (status) { status.style.display = 'none'; }
+        };
+        recognition.onresult = function(event) {
+            const hindiText = event.results[0][0].transcript;
+            // Translate Hindi to English using Google Translate API (client-side)
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=hi&tl=en&dt=t&q=${encodeURIComponent(hindiText)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const translated = data[0].map(d => d[0]).join('');
+                    document.getElementById('symptoms-textarea').value = translated;
+                    lastEnglishSymptoms = translated;
+                    // Optionally, auto-run analyzeSymptoms() here if you want
+                })
+                .catch(() => {
+                    document.getElementById('symptoms-textarea').value = hindiText;
+                    lastEnglishSymptoms = hindiText;
+                });
+        };
+        recognition.onerror = function(event) {
+            if (status) { status.style.display = 'none'; }
+            alert('Mic error: ' + event.error);
+        };
+        recognition.start();
+    }
+
+    document.getElementById('voice-btn').addEventListener('click', startHindiVoiceInput);
+
+    // --- Analyze Symptoms: Use translated English if available ---
+    async function analyzeSymptoms() {
+        const symptomsInput = document.getElementById('symptoms-textarea');
+        let symptoms = symptomsInput.value.trim();
+        // If lastEnglishSymptoms is set and matches textarea, use it (voice input)
+        if (lastEnglishSymptoms && symptoms === lastEnglishSymptoms) {
+            symptoms = lastEnglishSymptoms;
+        }
+        // else, use whatever is in textarea (typed English)
+        if (!symptoms) {
+            alert('Please describe your symptoms');
+            return;
+        }
+        const resultsDiv = document.getElementById('results');
+        const contentDiv = document.getElementById('result-content');
+        resultsDiv.classList.remove('hidden');
+        contentDiv.innerHTML = `<div class="result-card"><em>Analyzing symptoms, please wait...</em></div>`;
+        document.getElementById('translate-btn').classList.add('hidden');
+        document.getElementById('translated-result').style.display = 'none';
+        try {
+            const res = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symptoms })
+            });
+            const data = await res.json();
+            if (data.response && data.response !== 'Error') {
+                contentDiv.innerHTML = `<div class="result-card">${data.response.replace(/\n/g, "<br>")}</div>`;
+                document.getElementById('translate-btn').classList.remove('hidden');
+                // Store for translation
+                window._lastGeminiResponse = data.response;
+            } else {
+                contentDiv.innerHTML = `<div class="result-card risk-high">Sorry, there was an error analyzing your symptoms.<br>${data.error || ''}</div>`;
+            }
+        } catch (e) {
+            contentDiv.innerHTML = `<div class="result-card risk-high">Sorry, there was an error connecting to the server.</div>`;
+        }
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // --- Translate Gemini response to Hindi ---
+    async function translateResult() {
+        // Use the last Gemini response if available
+        const resultText = window._lastGeminiResponse || document.getElementById('result-content').innerText || '';
+        const translatedDiv = document.getElementById('translated-result');
+        translatedDiv.style.display = 'block';
+        translatedDiv.innerHTML = `<em>Translating...</em>`;
+        try {
+            const res = await fetch('https://libretranslate.de/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    q: resultText,
+                    source: 'en',
+                    target: 'hi',
+                    format: 'text'
+                })
+            });
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await res.json();
+            if (data.translatedText) {
+                translatedDiv.innerHTML = `<strong>हिंदी अनुवाद:</strong><br>${data.translatedText.replace(/\n/g, "<br>")}`;
+            } else {
+                translatedDiv.innerHTML = `<span style="color:red;">Translation failed.</span>`;
+            }
+        } catch (e) {
+            translatedDiv.innerHTML = `<span style="color:red;">Translation service is currently unavailable. Please try again later.</span>`;
+        }
+    }
+    // ...existing code...
+    </script>
+</body>
+</html>
