@@ -1,0 +1,20 @@
+services:
+  # Backend Flask API
+  - type: web
+    name: arogyadeep-backend
+    runtime: python
+    plan: free
+    buildCommand: |
+      cd gitcohealth/backend &&
+      pip install -r requirements.txt
+    startCommand: |
+      cd gitcohealth/backend &&
+      gunicorn --bind 0.0.0.0:$PORT app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /api/translate?lang=en
